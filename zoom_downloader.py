@@ -41,13 +41,6 @@ async def download_zoom_video_with_playwright(zoom_url, output_filename="zoom_re
             print(f"Opening Zoom URL: {zoom_url}")
             await page.goto(zoom_url, wait_until="domcontentloaded", timeout=60000)
 
-            try:
-                video_element = await page.wait_for_selector("video", timeout=20000)
-                await video_element.click()
-                print("Video player clicked to start playback")
-            except:
-                print("Video element not found automatically. Continuing anyway...")
-
             if not video_url:
                 print("No video URL found, sorry. Please open a bug.")
                 return False
