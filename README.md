@@ -1,6 +1,6 @@
 # Zoom Recording Downloader
 
-Downloads Zoom cloud recordings from shared links. 
+Downloads Zoom cloud recordings from shared links without authorization when downloading is disabled. 
 Works even in cases when [ZED: Zoom Easy Downloader](https://chromewebstore.google.com/detail/zed-zoom-easy-downloader/pdadlkbckhinonakkfkdaadceojbekep) fails after recent Zoom updates.
 
 
