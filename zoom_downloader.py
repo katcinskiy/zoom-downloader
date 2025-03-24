@@ -41,6 +41,29 @@ async def download_zoom_video_with_playwright(zoom_url, output_filename="zoom_re
             print(f"Opening Zoom URL: {zoom_url}")
             await page.goto(zoom_url, wait_until="domcontentloaded", timeout=60000)
 
+            print("Video URL not found immediately. Trying to interact with the page...")
+
+            watch_selectors = [
+                'span:text("Watch recording")'  # for zoom events, for example https://events.zoom.us/ejl/...
+            ]
+
+            if not video_url:
+                print("Can't find video link so far, will try to click 'Watch recording' button")
+                for selector in watch_selectors:
+                    try:
+                        print(f"Trying to click element with selector: {selector}")
+                        await page.wait_for_selector(selector, timeout=5000)
+                        await page.click(selector)
+                        print(f"Clicked {selector}")
+
+                        await asyncio.sleep(10)
+
+                        if video_url:
+                            print("Video URL found after clicking!")
+                            break
+                    except Exception as e:
+                        print(f"Failed to interact with {selector}: {str(e)}")
+
             if not video_url:
                 print("No video URL found, sorry. Please open a bug.")
                 return False
