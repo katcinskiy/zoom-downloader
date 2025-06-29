@@ -1,0 +1,76 @@
+steps:
+  # Build backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/video-pull-backend', '-f', 'backend/Dockerfile', '.']
+    id: 'build-backend'
+
+  # Build frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', 'gcr.io/$PROJECT_ID/video-pull-frontend',
+      '--build-arg', 'VITE_POSTHOG_KEY=YOUR_KEY_HERE',
+      '--build-arg', 'VITE_POSTHOG_HOST=https://eu.i.posthog.com',
+      './frontend'
+    ]
+    id: 'build-frontend'
+
+  # Push backend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/video-pull-backend']
+    id: 'push-backend'
+    waitFor: ['build-backend']
+
+  # Push frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/video-pull-frontend']
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+
+  # Deploy backend to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'video-pull-backend'
+      - '--image=gcr.io/$PROJECT_ID/video-pull-backend'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=8Gi'
+      - '--cpu=2'
+      - '--timeout=900'
+      - '--max-instances=1'
+      - '--min-instances=0'
+    id: 'deploy-backend'
+    waitFor: ['push-backend']
+
+  # Deploy frontend to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'video-pull-frontend'
+      - '--image=gcr.io/$PROJECT_ID/video-pull-frontend'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--max-instances=1'
+      - '--min-instances=0'
+    id: 'deploy-frontend'
+    waitFor: ['push-frontend']
+
+# Store images in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/video-pull-backend'
+  - 'gcr.io/$PROJECT_ID/video-pull-frontend'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: 10
+
+# Timeout for entire build
+timeout: '1200s'
